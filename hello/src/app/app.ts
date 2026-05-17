@@ -1,19 +1,19 @@
-import { Component, signal, computed } from '@angular/core'; // Adicionado computed
-import { SelectButtonModule } from 'primeng/selectbutton'; // ajustar tamanho da tablea, small,large
-import { Table, TableModule } from 'primeng/table'; // criar a tabela
+import { Component, signal, computed } from '@angular/core';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TableModule } from 'primeng/table';
 import { FormsModule } from '@angular/forms';
-import { NgModel } from '@angular/forms';
-import { ButtonModule } from 'primeng/button'; // botões
-import { DialogModule } from 'primeng/dialog'; // o modal de inserir e editar
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber'; 
 import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag'; // o status do produto, se em promocao ou nao
-import { ToggleSwitchModule } from 'primeng/toggleswitch'; // o switch de promocao ou nao
-import { CurrencyPipe } from '@angular/common'; // pra poder mostrar o preco na tabela
+import { TagModule } from 'primeng/tag';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { CurrencyPipe } from '@angular/common';
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [SelectButtonModule,TableModule,FormsModule,ButtonModule,DialogModule,InputNumberModule,InputTextModule,TagModule,ToggleSwitchModule,CurrencyPipe], // NgClass adicionado aqui
+  imports: [SelectButtonModule, TableModule, FormsModule, ButtonModule, DialogModule, InputNumberModule, InputTextModule, TagModule, ToggleSwitchModule, CurrencyPipe],
   template: `
       <div class="card max-w-6xl mx-auto mt-8">
         <div class="flex justify-between items-center mb-4">
@@ -28,7 +28,8 @@ import { CurrencyPipe } from '@angular/common'; // pra poder mostrar o preco na 
                     <th>Nome</th>
                     <th>Quantidade</th>
                     <th>Preço</th>
-                    <th>Status</th> <th style="width: 8rem">Ações</th>
+                    <th>Status</th> 
+                    <th style="width: 8rem">Ações</th>
                 </tr>
             </ng-template>
             <ng-template #body let-product>
@@ -57,87 +58,126 @@ import { CurrencyPipe } from '@angular/common'; // pra poder mostrar o preco na 
         <p-dialog [(visible)]="displayModal" [style]="{ width: '450px' }" header="Detalhes do Produto" [modal]="true" styleClass="p-fluid">
             <ng-template #content>
                 <div class="field mb-4">
-                    <label class="font-bold block mb-2">Nome do Produto</label>
-                    <input type="text" pInputText [(ngModel)]="product.name" />
+                    <label class="font-bold block mb-2">Nome do Produto <span class="text-red-500">*</span></label>
+                    <input type="text" pInputText [(ngModel)]="formName" placeholder="Ex: Teclado Mecânico" />
+                    @if (!isNameValid() && formName().length > 0) {
+                        <small class="text-red-500 block mt-1">O nome deve ter pelo menos 3 caracteres.</small>
+                    }
                 </div>
               
                 <div class="field mb-4">
-                    <label class="font-bold block mb-2">Quantidade em Estoque</label>
-                    <p-inputnumber [(ngModel)]="product.quantity" />
+                    <label class="font-bold block mb-2">Quantidade em Estoque <span class="text-red-500">*</span></label>
+                    <p-inputnumber [(ngModel)]="formQuantity" [showButtons]="true" [min]="0" />
+                    @if (!isQuantityValid() && formQuantity() !== null) {
+                        <small class="text-red-500 block mt-1">A quantidade deve ser maior que zero.</small>
+                    }
                 </div>
 
                 <div class="field mb-4">
-                    <label class="font-bold block mb-2">Preço</label>
-                    <p-inputnumber [(ngModel)]=product.preco mode = "currency" locale="pt-br" currency="BRL"/>
+                    <label class="font-bold block mb-2">Preço <span class="text-red-500">*</span></label>
+                    <p-inputnumber [(ngModel)]="formPreco" mode="currency" locale="pt-br" currency="BRL" [min]="0" />
+                    @if (!isPrecoValid() && formPreco() !== null) {
+                        <small class="text-red-500 block mt-1">O preço deve ser maior que zero.</small>
+                    }
                 </div>
+
                 <div class="field flex items-center gap-3">
                     <label class="font-bold">Colocar em Promoção?</label>
-                    <p-toggleswitch [(ngModel)]="product.promocao" />
+                    <p-toggleswitch [(ngModel)]="formPromocao" />
                 </div>
-                
             </ng-template>
 
             <ng-template #footer>
                 <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="hideDialog()" />
-                <p-button label="Salvar" icon="pi pi-check" (onClick)="saveProduct()" />
+                <p-button label="Salvar" icon="pi pi-check" (onClick)="saveProduct()" [disabled]="!isFormValid()" />
             </ng-template>
         </p-dialog>
     </div>
-      `
+  `
 })
 export class App {
-//usando signal pra deixar responsivo, semrpe q a lista mudar, a tela atualiza
+  // Lista de produtos
   products = signal<any[]>([]);
-  product : any = {};
 
+  // SIGNAL FORMS: Estado do Formulário
+  formCode = signal<string | null>(null);
+  formName = signal<string>('');
+  formQuantity = signal<number | null>(null);
+  formPreco = signal<number | null>(null);
+  formPromocao = signal<boolean>(false);
+
+  // VALIDAÇÕES: Computeds reativos
+  
+  isNameValid = computed(() => this.formName().trim().length >= 3);
+  isQuantityValid = computed(() => this.formQuantity() !== null && this.formQuantity()! > 0);
+  isPrecoValid = computed(() => this.formPreco() !== null && this.formPreco()! > 0);
+  
+  // Valida se o formulário inteiro está preenchido corretamente
+  isFormValid = computed(() => this.isNameValid() && this.isQuantityValid() && this.isPrecoValid());
+
+  // Estado da UI
   displayModal = signal(false);
   selectedSize = signal<any>(null);
-
   sizes = [
     {name: 'Small', value: 'small'},
     {name: 'Normal', value:'undefined'},
     {name: 'Large', value: 'large'}
   ];
 
-  saveProduct(){
-    const currentProduct = this.product;
-    // chama o metodo update que retorna o array de produtos
-    // usa o map pra percorrer o array item por item, ele cria um novo array baseado nas regras q vc der
-    // ternario: o codigo desse item atual é igual ao codigo do produto que eu editei?
-    // se sim, inves de manter o velho eu atualizo
-    // se nao, mantem no lugar
-    if(currentProduct.code){
-      this.products.update(list => list.map(p => p.code === currentProduct.code ? currentProduct : p));
+  saveProduct() {
+    // Barreira de segurança extra caso o botão seja acionado de forma indevida
+    if (!this.isFormValid()) return;
+
+    // Monta o objeto final lendo o valor dos Signals
+    const productToSave = {
+      code: this.formCode(),
+      name: this.formName().trim(),
+      quantity: this.formQuantity(),
+      preco: this.formPreco(),
+      promocao: this.formPromocao()
+    };
+
+    if (productToSave.code) {
+      // Atualiza produto existente
+      this.products.update(list => 
+        list.map(p => p.code === productToSave.code ? productToSave : p)
+      );
+    } else {
+      // Cria novo produto
+      productToSave.code = 'P' + Math.floor(Math.random() * 1000);
+      this.products.update(list => [...list, productToSave]);
     }
-    else{
-      // gera um code aleatorio pro produto
-      currentProduct.code = 'P' + Math.floor(Math.random() * 1000);
-      //salva o produto, cria um novo array e adicionar o produto no final
-      currentProduct.promocao = !!currentProduct.promocao;
-      //pega a lisa velha e adiciona o produto novo no final
-      this.products.update(list => [...list,currentProduct]);
-    }
+    
     this.hideDialog();
   }
-  deleteProduct(produto:any){
-    // usando o filter, basicamente ele manda percorrer a lista e manter 
-    // os itens que o code seja diferente do passado por parametro
-    // o filter entrega uma lista nova sem o item desejado
-    // pega a lista velha, filtra e devolve a lista sem o item
+
+  deleteProduct(produto: any) {
     this.products.update(list => list.filter(item => item.code !== produto.code));
   }
-  editProduct(produto:any){
-    //cria uma copia do produto e avisa o signal q mudou
-    this.product = {...produto};
+
+  editProduct(produto: any) {
+    // Alimenta os Signals com os dados do produto que o usuário quer editar
+    this.formCode.set(produto.code);
+    this.formName.set(produto.name);
+    this.formQuantity.set(produto.quantity);
+    this.formPreco.set(produto.preco);
+    this.formPromocao.set(!!produto.promocao);
+    
     this.displayModal.set(true);
   }
-  // çimpa a variável do produto atual
-  // isso garante que o formulário do modal abra em branco, e não com os dados do último produto 
-  openNew(){
-    this.product = {};
+
+  openNew() {
+    //Limpa os Signals para abrir um formulário em branco e zerar as validações
+    this.formCode.set(null);
+    this.formName.set('');
+    this.formQuantity.set(null);
+    this.formPreco.set(null);
+    this.formPromocao.set(false);
+    
     this.displayModal.set(true);
   }
-  hideDialog(){
+
+  hideDialog() {
     this.displayModal.set(false);
   }
 }

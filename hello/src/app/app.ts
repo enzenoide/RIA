@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Product } from './product.model';
+import { ProductService } from './services/product.service';
 import { ProductListComponent } from './product-list.component';
 import { ProductDetailComponent } from './product-detail.component';
 import { ProductCreateComponent } from './product-create.component';
@@ -42,7 +43,10 @@ import { ProductEditComponent } from './product-edit.component';
   `
 })
 export class App {
-  products = signal<Product[]>([]);
+  private productService = inject(ProductService);
+
+  products = this.productService.products; 
+
   selectedSize = signal<'small' | 'large' | undefined>(undefined);
 
   showDetail = signal(false);
@@ -50,6 +54,7 @@ export class App {
   showEdit = signal(false);
 
   selectedProduct = signal<Product | null>(null);
+
 
   openCreate() {
     this.selectedProduct.set(null);
@@ -81,16 +86,16 @@ export class App {
   }
 
   createProduct(product: Product) {
-    this.products.update((list: Product[]) => [...list, product]);
+    this.productService.create(product);
     this.closeCreate();
   }
 
   saveEditedProduct(product: Product) {
-    this.products.update((list: Product[]) => list.map((item: Product) => (item.code === product.code ? product : item)));
+    this.productService.update(product);
     this.closeEdit();
   }
 
   deleteProduct(product: Product) {
-    this.products.update((list: Product[]) => list.filter((item: Product) => item.code !== product.code));
+    this.productService.delete(product.code);
   }
 }

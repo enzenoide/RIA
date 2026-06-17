@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Product } from './product.model';
 import { ProductService } from './services/product.service';
@@ -42,7 +42,7 @@ import { ProductEditComponent } from './product-edit.component';
     ></product-edit>
   `
 })
-export class App {
+export class App implements OnInit {
   private productService = inject(ProductService);
 
   products = this.productService.products; 
@@ -55,6 +55,9 @@ export class App {
 
   selectedProduct = signal<Product | null>(null);
 
+  ngOnInit(): void {
+    this.productService.getAll().subscribe();
+  }
 
   openCreate() {
     this.selectedProduct.set(null);
@@ -62,8 +65,14 @@ export class App {
   }
 
   openDetail(product: Product) {
-    this.selectedProduct.set(product);
-    this.showDetail.set(true);
+    if (product.id) {
+      this.productService.getById(product.id).subscribe({
+        next: (fullProduct) => {
+          this.selectedProduct.set(fullProduct);
+          this.showDetail.set(true);
+        }
+      });
+    }
   }
 
   openEdit(product: Product) {
@@ -86,16 +95,18 @@ export class App {
   }
 
   createProduct(product: Product) {
-    this.productService.create(product);
     this.closeCreate();
+    this.productService.getAll().subscribe();
   }
 
   saveEditedProduct(product: Product) {
-    this.productService.update(product);
     this.closeEdit();
+    this.productService.getAll().subscribe();
   }
 
   deleteProduct(product: Product) {
-    this.productService.delete(product.code);
+    if (product.id) {
+      this.productService.delete(product.id).subscribe();
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CurrencyPipe } from '@angular/common'; // <-- 1. Importação do Pipe
+import { CurrencyPipe } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ButtonModule } from 'primeng/button';
@@ -10,7 +10,6 @@ import { Product } from './product.model';
 @Component({
   selector: 'product-list',
   standalone: true,
-  // 2. Adicionado o CurrencyPipe aqui no array de imports
   imports: [FormsModule, TableModule, SelectButtonModule, ButtonModule, TagModule, CurrencyPipe],
   template: `
     <div class="card max-w-6xl mx-auto mt-8">
@@ -30,7 +29,7 @@ import { Product } from './product.model';
         <ng-template pTemplate="header">
           <tr>
             <th>Código</th>
-            <th>Nome</th>
+            <th>Descrição</th>
             <th>Quantidade</th>
             <th>Preço</th>
             <th>Status</th>
@@ -41,8 +40,8 @@ import { Product } from './product.model';
         <ng-template pTemplate="body" let-product>
           <tr>
             <td>{{ product.code }}</td>
-            <td>{{ product.name }}</td>
-            <td>{{ product.quantity }}</td>
+            <td>{{ product.descricao }}</td>
+            <td>{{ product.quantidade }}</td>
             <td>{{ product.preco | currency:'BRL' }}</td>
             <td>
               @if (product.promocao) {

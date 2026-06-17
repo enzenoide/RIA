@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, inject } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -20,9 +20,10 @@ import { Product } from './product.model';
       <ng-template pTemplate="content">
         @if (product(); as p) {
           <div class="field mb-3">
-            <h3 class="font-bold mb-2">{{ p.name }}</h3>
+            <h3 class="font-bold mb-2">{{ p.descricao }}</h3>
+            <p class="mb-1"><strong>ID:</strong> {{ p.id }}</p>
             <p class="mb-1"><strong>Código:</strong> {{ p.code }}</p>
-            <p class="mb-1"><strong>Quantidade:</strong> {{ p.quantity }}</p>
+            <p class="mb-1"><strong>Quantidade:</strong> {{ p.quantidade }}</p>
             <p class="mb-1"><strong>Preço:</strong> {{ p.preco | currency:'BRL' }}</p>
             <p class="mb-1">
               <strong>Status:</strong>
@@ -35,7 +36,7 @@ import { Product } from './product.model';
             </p>
           </div>
         } @else {
-          <p>Selecione um produto para ver os detalhes.</p>
+          <p>Carregando detalhes do produto...</p>
         }
       </ng-template>
 

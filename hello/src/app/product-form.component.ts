@@ -21,34 +21,27 @@ import { Product } from './product.model';
     >
       <ng-template pTemplate="content">
         <div class="field mb-4">
-          <label class="font-bold block mb-2">Nome do Produto <span class="text-red-500">*</span></label>
+          <label class="font-bold block mb-2">Descrição do Produto <span class="text-red-500">*</span></label>
           <input
             type="text"
             pInputText
-            [ngModel]="formName()"
-            (ngModelChange)="formName.set($event)"
+            [ngModel]="formDescricao()"
+            (ngModelChange)="formDescricao.set($event)"
             placeholder="Ex: Teclado Mecânico"
           />
-          @if (!isNameValid() && formName().trim().length > 0) {
-            <small class="text-red-500 block mt-1">
-              O nome deve ter pelo menos 3 caracteres.
-            </small>
+          @if (!isDescricaoValid() && formDescricao().trim().length > 0) {
+            <small class="text-red-500 block mt-1">A descrição deve ter pelo menos 3 caracteres.</small>
           }
         </div>
 
         <div class="field mb-4">
           <label class="font-bold block mb-2">Quantidade em Estoque <span class="text-red-500">*</span></label>
           <p-inputnumber
-            [ngModel]="formQuantity()"
-            (ngModelChange)="formQuantity.set($event)"
+            [ngModel]="formQuantidade()"
+            (ngModelChange)="formQuantidade.set($event)"
             [showButtons]="true"
             [min]="0"
           ></p-inputnumber>
-          @if (!isQuantityValid() && formQuantity() !== null) {
-            <small class="text-red-500 block mt-1">
-              A quantidade deve ser maior que zero.
-            </small>
-          }
         </div>
 
         <div class="field mb-4">
@@ -61,11 +54,6 @@ import { Product } from './product.model';
             currency="BRL"
             [min]="0"
           ></p-inputnumber>
-          @if (!isPrecoValid() && formPreco() !== null) {
-            <small class="text-red-500 block mt-1">
-              O preço deve ser maior que zero.
-            </small>
-          }
         </div>
 
         <div class="field flex items-center gap-3">
@@ -92,21 +80,15 @@ export class ProductFormComponent {
   saved = output<Product>();
   cancel = output<void>();
 
-  formName = signal('');
-  formQuantity = signal<number | null>(null);
+  formDescricao = signal('');
+  formQuantidade = signal<number | null>(null);
   formPreco = signal<number | null>(null);
   formPromocao = signal(false);
 
-  isNameValid = computed(() => this.formName().trim().length >= 3);
-  isQuantityValid = computed(() => {
-    const quantity = this.formQuantity();
-    return quantity !== null && quantity > 0;
-  });
-  isPrecoValid = computed(() => {
-    const preco = this.formPreco();
-    return preco !== null && preco > 0;
-  });
-  isFormValid = computed(() => this.isNameValid() && this.isQuantityValid() && this.isPrecoValid());
+  isDescricaoValid = computed(() => this.formDescricao().trim().length >= 3);
+  isQuantidadeValid = computed(() => (this.formQuantidade() ?? 0) > 0);
+  isPrecoValid = computed(() => (this.formPreco() ?? 0) > 0);
+  isFormValid = computed(() => this.isDescricaoValid() && this.isQuantidadeValid() && this.isPrecoValid());
 
   constructor() {
     effect(() => {
@@ -117,20 +99,17 @@ export class ProductFormComponent {
   }
 
   onVisibilityChange(visible: boolean) {
-    if (!visible) {
-      this.cancel.emit();
-    }
+    if (!visible) this.cancel.emit();
   }
 
   saveProduct() {
-    if (!this.isFormValid()) {
-      return;
-    }
+    if (!this.isFormValid()) return;
 
     const productToSave: Product = {
-      code: this.product()?.code ?? 'P' + Math.floor(Math.random() * 1000),
-      name: this.formName().trim(),
-      quantity: this.formQuantity() ?? 0,
+      ...this.product(), // Mantém o ID original se for edição
+      code: this.product()?.code ?? 'PROD-' + Math.floor(Math.random() * 1000),
+      descricao: this.formDescricao().trim(),
+      quantidade: this.formQuantidade() ?? 0,
       preco: this.formPreco() ?? 0,
       promocao: this.formPromocao()
     };
@@ -140,13 +119,13 @@ export class ProductFormComponent {
 
   private resetForm(product: Product | null) {
     if (product) {
-      this.formName.set(product.name);
-      this.formQuantity.set(product.quantity);
+      this.formDescricao.set(product.descricao);
+      this.formQuantidade.set(product.quantidade);
       this.formPreco.set(product.preco);
       this.formPromocao.set(product.promocao);
     } else {
-      this.formName.set('');
-      this.formQuantity.set(null);
+      this.formDescricao.set('');
+      this.formQuantidade.set(null);
       this.formPreco.set(null);
       this.formPromocao.set(false);
     }
